@@ -833,12 +833,16 @@ getPrimFt = fromJust . repFieldType_maybe . getPrimTyOf
 
 getPrimTyOf :: Type -> UnaryType
 getPrimTyOf ty
-  | UnaryRep repTy <- repType ty =
-      if isBoolTy repTy
-      then jboolPrimTy
-      else case splitDataProductType_maybe repTy of
-        Just (_, _, _, [primTy]) -> primTy
-        _ -> pprPanic "DsForeign.getPrimTyOf" $ ppr ty
+  | UnaryRep repTy <- repType ty
+  , isBoolTy repTy
+  = jboolPrimTy
+  | UnaryRep repTy <- repType ty
+  , isStringTy repTy
+  = mkObjectPrimTy jstringTy
+  | UnaryRep repTy <- repType ty
+  = case splitDataProductType_maybe repTy of
+      Just (_, _, _, [primTy]) -> primTy
+      _ -> pprPanic "DsForeign.getPrimTyOf" $ ppr ty
 getPrimTyOf _ = error $ "getPrimTyOf: bad getPrimTyOf"
 
 dsFWrapper :: Id -> Coercion -> CLabelString -> Bool -> DsM ([Binding], [ClassExport])
